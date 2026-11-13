@@ -1,0 +1,48 @@
+name: Build Windows plugin
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -A x64
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Recurse "build/DootMidi_artefacts/Release/VST3/Doot MIDI.vst3" "dist/Doot MIDI.vst3"
+          Copy-Item "build/DootMidi_artefacts/Release/Standalone/Doot MIDI.exe" "dist/Doot MIDI Standalone.exe"
+          Compress-Archive -Path "dist/*" -DestinationPath "Doot-MIDI-Windows.zip" -Force
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Doot-MIDI-Windows
+          path: Doot-MIDI-Windows.zip
+
+      - name: Publish "latest build" download
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-build --yes --cleanup-tag || true
+          gh release create latest-build Doot-MIDI-Windows.zip \
+            --title "Latest build" \
+            --notes "Built from ${GITHUB_SHA::7}. Download Doot-MIDI-Windows.zip below." \
+            --prerelease --target "$GITHUB_SHA"
