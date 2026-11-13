@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 # the Visual C++ Redistributable.
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-project(DootMidi VERSION 0.1.0 LANGUAGES C CXX)
+project(DootMidi VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,7 +34,12 @@ juce_add_plugin(DootMidi
 
 target_sources(DootMidi PRIVATE
     Source/PluginProcessor.cpp
-    Source/PluginEditor.cpp)
+    Source/PluginEditor.cpp
+    Source/NoteView.cpp
+    Source/TakeRecorder.cpp
+    Source/TakeResult.cpp
+    Source/Engine/PitchTracker.cpp
+    Source/Engine/NoteSegmenter.cpp)
 
 target_compile_definitions(DootMidi PUBLIC
     JUCE_WEB_BROWSER=0
@@ -51,3 +56,12 @@ target_link_libraries(DootMidi
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+# Engine tests (plain C++, no JUCE): cmake -DDOOT_BUILD_TESTS=ON
+option(DOOT_BUILD_TESTS "Build the detection engine tests" OFF)
+if(DOOT_BUILD_TESTS)
+    add_executable(engine_test
+        tests/engine_test.cpp
+        Source/Engine/PitchTracker.cpp
+        Source/Engine/NoteSegmenter.cpp)
+endif()

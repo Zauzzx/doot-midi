@@ -10,7 +10,18 @@ permissions:
   contents: write
 
 jobs:
+  engine-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run detection tests
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra tests/engine_test.cpp \
+            Source/Engine/PitchTracker.cpp Source/Engine/NoteSegmenter.cpp -o engine_test
+          ./engine_test
+
   windows:
+    needs: engine-tests
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
